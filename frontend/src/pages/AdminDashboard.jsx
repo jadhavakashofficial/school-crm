@@ -11,7 +11,7 @@ import "chart.js/auto";
 const AdminDashboard = () => {
   // Active tab: "teachers", "students", "classes", "financial", "analysis"
   const [activeTab, setActiveTab] = useState("teachers");
-  // State for period selection in Financial Analytics ("monthly" or "yearly")
+  // Financial period: "monthly" or "yearly"
   const [financialPeriod, setFinancialPeriod] = useState("monthly");
 
   // Data states
@@ -29,6 +29,25 @@ const AdminDashboard = () => {
   // Error state
   const [error, setError] = useState("");
 
+  // --- Pagination, Filtering & Sorting States for Teachers, Students, Classes ---
+  const [teacherSearch, setTeacherSearch] = useState("");
+  const [teacherSortField, setTeacherSortField] = useState("name");
+  const [teacherSortOrder, setTeacherSortOrder] = useState("asc");
+  const [teacherCurrentPage, setTeacherCurrentPage] = useState(1);
+  const teacherPageSize = 5;
+
+  const [studentSearch, setStudentSearch] = useState("");
+  const [studentSortField, setStudentSortField] = useState("name");
+  const [studentSortOrder, setStudentSortOrder] = useState("asc");
+  const [studentCurrentPage, setStudentCurrentPage] = useState(1);
+  const studentPageSize = 5;
+
+  const [classSearch, setClassSearch] = useState("");
+  const [classSortField, setClassSortField] = useState("name");
+  const [classSortOrder, setClassSortOrder] = useState("asc");
+  const [classCurrentPage, setClassCurrentPage] = useState(1);
+  const classPageSize = 5;
+
   // Fetch data when activeTab or financialPeriod changes
   useEffect(() => {
     if (activeTab === "teachers") {
@@ -42,7 +61,7 @@ const AdminDashboard = () => {
     }
   }, [activeTab, financialPeriod]);
 
-  // Fetch functions
+  // --- Data Fetching Functions ---
   const fetchTeachers = async () => {
     try {
       const response = await axiosInstance.get("/teachers");
@@ -55,7 +74,7 @@ const AdminDashboard = () => {
   const fetchStudents = async () => {
     try {
       const response = await axiosInstance.get("/students");
-      // Map contactNumber (adjust mapping as needed)
+      // Map contactNumber as needed (if stored under profile, adjust accordingly)
       const mappedStudents = response.data.data.map((student) => ({
         ...student,
         contactNumber: student.contactNumber,
@@ -85,7 +104,7 @@ const AdminDashboard = () => {
     }
   };
 
-  // Open Modal for Add/Edit
+  // --- Modal Handling ---
   const openModal = (type, item = null) => {
     setError("");
     setCurrentItem(item);
@@ -99,14 +118,13 @@ const AdminDashboard = () => {
     setIsModalOpen(true);
   };
 
-  // Close Modal
   const closeModal = () => {
     setIsModalOpen(false);
     setCurrentItem(null);
     setFormData({});
   };
 
-  // Handle form input changes
+  // --- Form Handling ---
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     let val = value;
@@ -116,20 +134,16 @@ const AdminDashboard = () => {
     setFormData({ ...formData, [name]: val });
   };
 
-  // Handle Add/Edit form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     try {
       if (activeTab === "financial" || activeTab === "analysis") {
-        // Financial/analysis operations handled separately if needed
         return;
       }
       if (currentItem) {
-        // Edit operation
         await axiosInstance.put(`/${activeTab}/${currentItem._id}`, formData);
       } else {
-        // Add operation
         await axiosInstance.post(`/${activeTab}`, formData);
       }
       fetchDataAfterChange();
@@ -139,7 +153,6 @@ const AdminDashboard = () => {
     }
   };
 
-  // Handle Delete operation
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this item?")) {
       try {
@@ -151,7 +164,6 @@ const AdminDashboard = () => {
     }
   };
 
-  // Refresh data after operations
   const fetchDataAfterChange = () => {
     if (activeTab === "teachers") {
       fetchTeachers();
@@ -166,33 +178,26 @@ const AdminDashboard = () => {
     }
   };
 
-  // Utility: Capitalize first letter
+  // --- Utility Functions ---
   const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
-  // Helper to format DOB for students.
-  // Converts a date string from "dd/mm/yyyy" or ISO format to "YYYY-MM-DD"
+  // Helper to format DOB in "DD/MM/YYYY" format.
   const formatDOB = (dobString) => {
-    if (!dobString) return "";
-    if (dobString.includes("/")) {
-      const parts = dobString.split("/");
-      if (parts.length !== 3) return "";
-      const [day, month, year] = parts;
-      const paddedDay = day.padStart(2, "0");
-      const paddedMonth = month.padStart(2, "0");
-      return `${year}-${paddedMonth}-${paddedDay}`;
-    } else {
-      const dateObj = new Date(dobString);
-      if (isNaN(dateObj.getTime())) return "";
-      return dateObj.toISOString().split("T")[0];
-    }
+    if (!dobString) return "No";
+    const dateObj = new Date(dobString);
+    if (isNaN(dateObj.getTime())) return "No";
+    const day = String(dateObj.getDate()).padStart(2, "0");
+    const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+    const year = dateObj.getFullYear();
+    return `${day}/${month}/${year}`;
   };
 
-  // getInitialFormData formats initial form values based on tab
+  // getInitialFormData: Set initial values based on tab and item.
   const getInitialFormData = (tab, item) => {
     if (tab === "teachers") {
       return item
         ? { name: item.name, email: item.email, salary: item.salary }
-        : { name: "", email: "", salary: "" };
+        : { name: "", email: "", salary: "", role: "teacher" };
     } else if (tab === "students") {
       return item
         ? {
@@ -200,11 +205,11 @@ const AdminDashboard = () => {
             email: item.email,
             gender: item.gender,
             feesPaid: item.feesPaid,
-            // Format DOB using formatDOB helper
-            dob: item.dob ? formatDOB(item.dob) : "",
-            contactNumber: item.contactNumber,
+            // Use formatDOB to convert dob to "DD/MM/YYYY". If no dob, display "No"
+            dob: item.dob ? formatDOB(item.dob) : "No",
+            contactNumber: item.contactNumber ? item.contactNumber : "No",
           }
-        : { name: "", email: "", gender: "", feesPaid: 0, dob: "", contactNumber: "" };
+        : { name: "", email: "", gender: "", feesPaid: 0, dob: "No", contactNumber: "No" };
     } else if (tab === "classes") {
       return item
         ? { name: item.name, description: item.description, teacherId: item.teacher._id, maxStudents: item.maxStudents, fee: item.fee }
@@ -227,7 +232,7 @@ const AdminDashboard = () => {
         { key: "contactNumber", label: "Contact Number" },
         { key: "gender", label: "Gender" },
         { key: "feesPaid", label: "Fees Paid (₹)" },
-        { key: "dob", label: "DOB" },
+        // { key: "dob", label: "DOB" },
       ];
     } else if (activeTab === "classes") {
       return [
@@ -240,7 +245,7 @@ const AdminDashboard = () => {
     return [];
   };
 
-  // Prepare data for Classes table (to display teacher name)
+  // Prepare data for Classes table (including teacher name)
   const getClassesData = () => {
     return classes.map((cls) => ({
       ...cls,
@@ -248,12 +253,12 @@ const AdminDashboard = () => {
     }));
   };
 
-  // Prepare data for Students table (format feesPaid and dob)
+  // Prepare data for Students table, using formatDOB for proper display.
   const getStudentsData = () => {
     return students.map((student) => ({
       ...student,
       feesPaid: student.feesPaid > 0 ? student.feesPaid : "No",
-      dob: new Date(student.dob).toLocaleDateString(),
+      dob: student.dob ? formatDOB(student.dob) : "No",
     }));
   };
 
@@ -271,14 +276,7 @@ const AdminDashboard = () => {
     };
   };
 
-  // Helper function to calculate maximum allowed DOB (for minimum age of 6)
-  const getMaxDOB = () => {
-    const today = new Date();
-    today.setFullYear(today.getFullYear() - 6);
-    return today.toISOString().split("T")[0];
-  };
-
-  // Helper function for Class Analysis (using students data)
+  // Helper for Class Analysis: compute gender ratio from students
   const getGenderRatioData = () => {
     const maleCount = students.filter((s) => s.gender === "Male").length;
     const femaleCount = students.filter((s) => s.gender === "Female").length;
@@ -293,6 +291,79 @@ const AdminDashboard = () => {
       ],
     };
   };
+
+  // Helper: maximum allowed DOB (for minimum age 6)
+  const getMaxDOB = () => {
+    const today = new Date();
+    today.setFullYear(today.getFullYear() - 6);
+    return today.toISOString().split("T")[0];
+  };
+
+  // --- Pagination, Filtering & Sorting for Teachers ---
+  const filteredTeachers = teachers.filter((t) =>
+    t.name.toLowerCase().includes(teacherSearch.toLowerCase()) ||
+    t.email.toLowerCase().includes(teacherSearch.toLowerCase())
+  );
+  const sortedTeachers = [...filteredTeachers].sort((a, b) => {
+    let fieldA = a[teacherSortField];
+    let fieldB = b[teacherSortField];
+    if (typeof fieldA === "string") {
+      fieldA = fieldA.toLowerCase();
+      fieldB = fieldB.toLowerCase();
+    }
+    if (fieldA < fieldB) return teacherSortOrder === "asc" ? -1 : 1;
+    if (fieldA > fieldB) return teacherSortOrder === "asc" ? 1 : -1;
+    return 0;
+  });
+  const teacherTotalPages = Math.ceil(sortedTeachers.length / teacherPageSize);
+  const paginatedTeachers = sortedTeachers.slice(
+    (teacherCurrentPage - 1) * teacherPageSize,
+    teacherCurrentPage * teacherPageSize
+  );
+
+  // --- Pagination, Filtering & Sorting for Students ---
+  const filteredStudents = students.filter((s) =>
+    s.name.toLowerCase().includes(studentSearch.toLowerCase()) ||
+    s.email.toLowerCase().includes(studentSearch.toLowerCase())
+  );
+  const sortedStudents = [...filteredStudents].sort((a, b) => {
+    let fieldA = a[studentSortField];
+    let fieldB = b[studentSortField];
+    if (typeof fieldA === "string") {
+      fieldA = fieldA.toLowerCase();
+      fieldB = fieldB.toLowerCase();
+    }
+    if (fieldA < fieldB) return studentSortOrder === "asc" ? -1 : 1;
+    if (fieldA > fieldB) return studentSortOrder === "asc" ? 1 : -1;
+    return 0;
+  });
+  const studentTotalPages = Math.ceil(sortedStudents.length / studentPageSize);
+  const paginatedStudents = sortedStudents.slice(
+    (studentCurrentPage - 1) * studentPageSize,
+    studentCurrentPage * studentPageSize
+  );
+
+  // --- Pagination, Filtering & Sorting for Classes ---
+  const filteredClasses = classes.filter((c) =>
+    c.name.toLowerCase().includes(classSearch.toLowerCase()) ||
+    (c.description && c.description.toLowerCase().includes(classSearch.toLowerCase()))
+  );
+  const sortedClasses = [...filteredClasses].sort((a, b) => {
+    let fieldA = a[classSortField];
+    let fieldB = b[classSortField];
+    if (typeof fieldA === "string") {
+      fieldA = fieldA.toLowerCase();
+      fieldB = fieldB.toLowerCase();
+    }
+    if (fieldA < fieldB) return classSortOrder === "asc" ? -1 : 1;
+    if (fieldA > fieldB) return classSortOrder === "asc" ? 1 : -1;
+    return 0;
+  });
+  const classTotalPages = Math.ceil(sortedClasses.length / classPageSize);
+  const paginatedClasses = sortedClasses.slice(
+    (classCurrentPage - 1) * classPageSize,
+    classCurrentPage * classPageSize
+  );
 
   return (
     <Layout>
@@ -360,7 +431,7 @@ const AdminDashboard = () => {
         </div>
 
         {/* Add Button (not shown for Financial or Analysis tabs) */}
-        {activeTab !== "financial" && activeTab !== "analysis" && (
+        {(activeTab !== "financial" && activeTab !== "analysis") && (
           <div className="flex justify-end">
             <button
               onClick={() => openModal("add")}
@@ -374,72 +445,223 @@ const AdminDashboard = () => {
         {/* Content Section */}
         {activeTab === "teachers" && (
           <section>
+            {/* Filtering & Sorting for Teachers */}
+            <div className="flex justify-between items-center mb-4">
+              <input
+                type="text"
+                placeholder="Search Teachers..."
+                value={teacherSearch}
+                onChange={(e) => { setTeacherSearch(e.target.value); setTeacherCurrentPage(1); }}
+                className="px-3 py-2 border rounded"
+              />
+              <div className="flex items-center space-x-2">
+                <select
+                  value={teacherSortField}
+                  onChange={(e) => setTeacherSortField(e.target.value)}
+                  className="px-3 py-2 border rounded"
+                >
+                  <option value="name">Name</option>
+                  <option value="email">Email</option>
+                  <option value="salary">Salary</option>
+                </select>
+                <select
+                  value={teacherSortOrder}
+                  onChange={(e) => setTeacherSortOrder(e.target.value)}
+                  className="px-3 py-2 border rounded"
+                >
+                  <option value="asc">Ascending</option>
+                  <option value="desc">Descending</option>
+                </select>
+              </div>
+            </div>
             <Table
               headers={getTableHeaders()}
-              data={teachers}
+              data={paginatedTeachers}
               onEdit={(item) => openModal("edit", item)}
               onDelete={(id) => handleDelete(id)}
             />
+            {sortedTeachers.length > teacherPageSize && (
+              <div className="flex justify-center space-x-4 mt-4">
+                <button
+                  disabled={teacherCurrentPage === 1}
+                  onClick={() => setTeacherCurrentPage(teacherCurrentPage - 1)}
+                  className="px-3 py-1 border rounded"
+                >
+                  Prev
+                </button>
+                <span>
+                  Page {teacherCurrentPage} of{" "}
+                  {Math.ceil(sortedTeachers.length / teacherPageSize)}
+                </span>
+                <button
+                  disabled={teacherCurrentPage >= Math.ceil(sortedTeachers.length / teacherPageSize)}
+                  onClick={() => setTeacherCurrentPage(teacherCurrentPage + 1)}
+                  className="px-3 py-1 border rounded"
+                >
+                  Next
+                </button>
+              </div>
+            )}
           </section>
         )}
 
         {activeTab === "students" && (
           <section>
+            {/* Filtering & Sorting for Students */}
+            <div className="flex justify-between items-center mb-4">
+              <input
+                type="text"
+                placeholder="Search Students..."
+                value={studentSearch}
+                onChange={(e) => { setStudentSearch(e.target.value); setStudentCurrentPage(1); }}
+                className="px-3 py-2 border rounded"
+              />
+              <div className="flex items-center space-x-2">
+                <select
+                  value={studentSortField}
+                  onChange={(e) => setStudentSortField(e.target.value)}
+                  className="px-3 py-2 border rounded"
+                >
+                  <option value="name">Name</option>
+                  <option value="email">Email</option>
+                </select>
+                <select
+                  value={studentSortOrder}
+                  onChange={(e) => setStudentSortOrder(e.target.value)}
+                  className="px-3 py-2 border rounded"
+                >
+                  <option value="asc">Ascending</option>
+                  <option value="desc">Descending</option>
+                </select>
+              </div>
+            </div>
             <Table
               headers={getTableHeaders()}
-              data={getStudentsData()}
+              data={paginatedStudents}
               onEdit={(item) => openModal("edit", item)}
               onDelete={(id) => handleDelete(id)}
             />
+            {sortedStudents.length > studentPageSize && (
+              <div className="flex justify-center space-x-4 mt-4">
+                <button
+                  disabled={studentCurrentPage === 1}
+                  onClick={() => setStudentCurrentPage(studentCurrentPage - 1)}
+                  className="px-3 py-1 border rounded"
+                >
+                  Prev
+                </button>
+                <span>
+                  Page {studentCurrentPage} of{" "}
+                  {Math.ceil(sortedStudents.length / studentPageSize)}
+                </span>
+                <button
+                  disabled={studentCurrentPage >= Math.ceil(sortedStudents.length / studentPageSize)}
+                  onClick={() => setStudentCurrentPage(studentCurrentPage + 1)}
+                  className="px-3 py-1 border rounded"
+                >
+                  Next
+                </button>
+              </div>
+            )}
           </section>
         )}
 
         {activeTab === "classes" && (
           <section>
+            {/* Filtering & Sorting for Classes */}
+            <div className="flex justify-between items-center mb-4">
+              <input
+                type="text"
+                placeholder="Search Classes..."
+                value={classSearch}
+                onChange={(e) => { setClassSearch(e.target.value); setClassCurrentPage(1); }}
+                className="px-3 py-2 border rounded"
+              />
+              <div className="flex items-center space-x-2">
+                <select
+                  value={classSortField}
+                  onChange={(e) => setClassSortField(e.target.value)}
+                  className="px-3 py-2 border rounded"
+                >
+                  <option value="name">Name</option>
+                  <option value="description">Description</option>
+                </select>
+                <select
+                  value={classSortOrder}
+                  onChange={(e) => setClassSortOrder(e.target.value)}
+                  className="px-3 py-2 border rounded"
+                >
+                  <option value="asc">Ascending</option>
+                  <option value="desc">Descending</option>
+                </select>
+              </div>
+            </div>
             <Table
               headers={getTableHeaders()}
-              data={getClassesData()}
+              data={paginatedClasses.map((cls) => ({
+                ...cls,
+                teacherName: cls.teacher.name,
+              }))}
               onEdit={(item) => openModal("edit", item)}
-              // Teachers should not see a delete button for classes.
-              onDelete={null}
+              onDelete={null} // No delete for classes
             />
+            {sortedClasses.length > classPageSize && (
+              <div className="flex justify-center space-x-4 mt-4">
+                <button
+                  disabled={classCurrentPage === 1}
+                  onClick={() => setClassCurrentPage(classCurrentPage - 1)}
+                  className="px-3 py-1 border rounded"
+                >
+                  Prev
+                </button>
+                <span>
+                  Page {classCurrentPage} of{" "}
+                  {Math.ceil(sortedClasses.length / classPageSize)}
+                </span>
+                <button
+                  disabled={classCurrentPage >= Math.ceil(sortedClasses.length / classPageSize)}
+                  onClick={() => setClassCurrentPage(classCurrentPage + 1)}
+                  className="px-3 py-1 border rounded"
+                >
+                  Next
+                </button>
+              </div>
+            )}
           </section>
         )}
 
-{activeTab === "financial" && (
-  <section className="space-y-6">
-    <h2 className="text-2xl font-semibold text-gray-700">Financial Analytics</h2>
-    <div className="flex items-center space-x-4">
-      <label className="font-medium text-gray-700">Period:</label>
-      <select
-        value={financialPeriod}
-        onChange={(e) => setFinancialPeriod(e.target.value)}
-        className="px-3 py-2 border rounded"
-      >
-        <option value="monthly">Monthly</option>
-        <option value="yearly">Yearly</option>
-      </select>
-    </div>
-    {financialData ? (
-      <div
-        className="bg-white p-9 rounded shadow flex justify-center items-center mx-auto"
-        style={{ width: "500px", height: "500px" }}
-      >
-        <h3 className="sr-only">Financial Summary</h3>
-        <Doughnut
-          data={getFinancialDoughnutData()}
-          options={{ maintainAspectRatio: false }}
-          height={300}
-          width={300}
-        />
-      </div>
-    ) : (
-      <div>Loading Financial Analytics...</div>
-    )}
-  </section>
-)}
-
-
+        {activeTab === "financial" && (
+          <section className="space-y-6">
+            <h2 className="text-2xl font-semibold text-gray-700">Financial Analytics</h2>
+            <div className="flex items-center space-x-4">
+              <label className="font-medium text-gray-700">Period:</label>
+              <select
+                value={financialPeriod}
+                onChange={(e) => setFinancialPeriod(e.target.value)}
+                className="px-3 py-2 border rounded"
+              >
+                <option value="monthly">Monthly</option>
+                <option value="yearly">Yearly</option>
+              </select>
+            </div>
+            {financialData ? (
+              <div
+                className="bg-white p-9 rounded shadow flex justify-center items-center mx-auto"
+                style={{ width: "500px", height: "500px" }}
+              >
+                <h3 className="sr-only">Financial Summary</h3>
+                <Doughnut
+                  data={getFinancialDoughnutData()}
+                  options={{ maintainAspectRatio: false }}
+                  height={300}
+                  width={300}
+                />
+              </div>
+            ) : (
+              <div>Loading Financial Analytics...</div>
+            )}
+          </section>
+        )}
 
         {activeTab === "analysis" && (
           <section className="space-y-6">
@@ -454,7 +676,7 @@ const AdminDashboard = () => {
           </section>
         )}
 
-        {/* Modal for Add/Edit (shown for Teachers, Students, and Classes) */}
+        {/* Modal for Add/Edit (for Teachers, Students, and Classes) */}
         {(activeTab !== "financial" && activeTab !== "analysis") && (
           <Modal isOpen={isModalOpen} onClose={closeModal} title={modalTitle}>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -581,7 +803,7 @@ const AdminDashboard = () => {
                       value={formData.dob || ""}
                       onChange={handleChange}
                       required
-                      max={getMaxDOB()}  // Enforce that the student is at least 6 years old
+                      max={getMaxDOB()}  // Enforce minimum age of 6 years
                     />
                   </div>
                   <div>

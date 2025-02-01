@@ -12,9 +12,10 @@ router.post('/', protect, authorize('admin'), async (req, res, next) => {
 
   try {
     // Ensure role is 'teacher'
-    if (role !== 'teacher') {
-      return res.status(400).json({ message: 'Role must be teacher' });
-    }
+    // console.log(role);
+    // if (role !== 'admin') {
+    //   return res.status(400).json({ message: 'Role must be admin' });
+    // }
 
     // Create new teacher with plain text password
     const teacher = await User.create({
