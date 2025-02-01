@@ -49,9 +49,9 @@ const StudentDashboard = () => {
             <table className="min-w-full bg-white rounded shadow">
               <thead>
                 <tr>
-                  <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm font-semibold text-gray-700">Name</th>
-                  <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm font-semibold text-gray-700">Teacher</th>
-                  <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm font-semibold text-gray-700">Fee</th>
+                  <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm font-semibold text-gray-700">Class Name</th>
+                  <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm font-semibold text-gray-700">Teacher Name</th>
+                  <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm font-semibold text-gray-700">Class Description</th>
                   {/* <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm font-semibold text-gray-700">Actions</th> */}
                 </tr>
               </thead>
@@ -60,7 +60,7 @@ const StudentDashboard = () => {
                   <tr key={classItem._id} className="hover:bg-gray-100">
                     <td className="px-6 py-4 border-b border-gray-200">{classItem.name}</td>
                     <td className="px-6 py-4 border-b border-gray-200">{classItem.teacher.name}</td>
-                    <td className="px-6 py-4 border-b border-gray-200">${classItem.fee}</td>
+                    <td className="px-6 py-4 border-b border-gray-200">{classItem.description}</td>
                     {/* <td className="px-6 py-4 border-b border-gray-200">
                       <button className="px-3 py-1 text-sm text-white bg-blue-600 rounded hover:bg-blue-700">
                         View Details

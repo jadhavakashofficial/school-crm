@@ -31,17 +31,25 @@ const userSchema = new mongoose.Schema({
     enum: ['Male', 'Female', 'Other'],
     required: false,
   },
-  profile: {
-    contactNumber: {
-      type: String,
-      required: false,
-    },
-    profilePicture: {
-      type: String,
-      required: false,
-      default: 'default-profile.png',
-    },
+  dob: {
+    type: Date,
+    required: [false, 'Please add Date of Birth'],
   },
+  contactNumber: {
+    type: String,
+    required: false,
+  },
+  // profile: {
+  //   contactNumber: {
+  //     type: String,
+  //     required: false,
+  //   },
+  //   profilePicture: {
+  //     type: String,
+  //     required: false,
+  //     default: 'default-profile.png',
+  //   },
+  // },
   assignedClasses: [
     {
       type: mongoose.Schema.Types.ObjectId,
@@ -49,6 +57,11 @@ const userSchema = new mongoose.Schema({
     },
   ],
   salary: {
+    type: Number,
+    required: false,
+    // function() { return this.role === 'teacher'; },
+  },
+  feesPaid: {
     type: Number,
     required: false,
     // function() { return this.role === 'teacher'; },

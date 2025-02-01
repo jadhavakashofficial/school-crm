@@ -5,8 +5,8 @@ import axiosInstance from "../api/axios";
 import Layout from "../components/Layout";
 import Modal from "../components/Modal";
 import Table from "../components/Table";
-import { Bar, Pie } from 'react-chartjs-2';
-import 'chart.js/auto';
+import { Bar, Pie } from "react-chartjs-2";
+import "chart.js/auto";
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("teachers"); // 'teachers', 'students', 'classes', 'financial'
@@ -59,7 +59,7 @@ const AdminDashboard = () => {
       // Map contactNumber from profile to top-level for easy access
       const mappedStudents = response.data.data.map((student) => ({
         ...student,
-        contactNumber: student.profile.contactNumber,
+        contactNumber: student.contactNumber,
       }));
       setStudents(mappedStudents);
     } catch (err) {
@@ -110,7 +110,7 @@ const AdminDashboard = () => {
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     let val = value;
-    if (type === 'checkbox') {
+    if (type === "checkbox") {
       val = checked ? 1 : 0; // Convert boolean to number for feesPaid
     }
     setFormData({ ...formData, [name]: val });
@@ -168,7 +168,27 @@ const AdminDashboard = () => {
 
   // Utility functions
   const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+// Converts a date string from "dd/mm/yyyy" to "YYYY-MM-DD"
+const formatDOB = (dobString) => {
+  if (!dobString) return "";
+  // Check if the date string contains "/" (dd/mm/yyyy format)
+  if (dobString.includes("/")) {
+    const parts = dobString.split("/");
+    if (parts.length !== 3) return "";
+    const [day, month, year] = parts;
+    // Ensure day and month are two digits
+    const paddedDay = day.padStart(2, "0");
+    const paddedMonth = month.padStart(2, "0");
+    return `${year}-${paddedMonth}-${paddedDay}`;
+  } else {
+    // Otherwise, assume it's in a format that new Date() can parse
+    const dateObj = new Date(dobString);
+    if (isNaN(dateObj.getTime())) return "";
+    return dateObj.toISOString().split("T")[0];
+  }
+};
 
+  // Update getInitialFormData to format dob properly for students
   const getInitialFormData = (tab, item) => {
     if (tab === "teachers") {
       return item
@@ -176,14 +196,29 @@ const AdminDashboard = () => {
         : { name: "", email: "", salary: "" };
     } else if (tab === "students") {
       return item
-        ? { name: item.name, email: item.email, gender: item.gender, feesPaid: item.feesPaid, dob: item.dob.substring(0,10), contactNumber: item.contactNumber }
+        ? {
+            name: item.name,
+            email: item.email,
+            gender: item.gender,
+            feesPaid: item.feesPaid,
+            // Use formatDOB to convert the dob string from dd/mm/yyyy to YYYY-MM-DD
+            dob: item.dob ? formatDOB(item.dob) : "",
+            contactNumber: item.contactNumber,
+          }
         : { name: "", email: "", gender: "", feesPaid: 0, dob: "", contactNumber: "" };
     } else if (tab === "classes") {
       return item
-        ? { name: item.name, description: item.description, teacherId: item.teacher._id, maxStudents: item.maxStudents, fee: item.fee }
+        ? {
+            name: item.name,
+            description: item.description,
+            teacherId: item.teacher._id,
+            maxStudents: item.maxStudents,
+            fee: item.fee,
+          }
         : { name: "", description: "", teacherId: "", maxStudents: "", fee: "" };
     }
   };
+  
 
   // Define table headers based on activeTab
   const getTableHeaders = () => {
@@ -191,7 +226,7 @@ const AdminDashboard = () => {
       return [
         { key: "name", label: "Name" },
         { key: "email", label: "Email" },
-        { key: "salary", label: "Salary ($)" },
+        { key: "salary", label: "Salary (₹)" },
       ];
     } else if (activeTab === "students") {
       return [
@@ -199,7 +234,7 @@ const AdminDashboard = () => {
         { key: "email", label: "Email" },
         { key: "contactNumber", label: "Contact Number" },
         { key: "gender", label: "Gender" },
-        { key: "feesPaid", label: "Fees Paid ($)" },
+        { key: "feesPaid", label: "Fees Paid (₹)" },
         { key: "dob", label: "DOB" },
       ];
     } else if (activeTab === "classes") {
@@ -207,7 +242,7 @@ const AdminDashboard = () => {
         { key: "name", label: "Name" },
         { key: "teacherName", label: "Teacher" },
         { key: "maxStudents", label: "Max Students" },
-        { key: "fee", label: "Fee ($)" },
+        { key: "fee", label: "Fee (₹)" },
       ];
     }
     return [];
@@ -225,7 +260,7 @@ const AdminDashboard = () => {
   const getStudentsData = () => {
     return students.map((student) => ({
       ...student,
-      feesPaid: student.feesPaid > 0 ? student.feesPaid : 'No',
+      feesPaid: student.feesPaid > 0 ? student.feesPaid : "No",
       dob: new Date(student.dob).toLocaleDateString(),
     }));
   };
@@ -235,27 +270,34 @@ const AdminDashboard = () => {
     if (!financialData) return {};
 
     const barData = {
-      labels: ['Salary Paid', 'Fees Collected', 'Profit'],
+      labels: ["Salary Paid", "Fees Collected", "Profit"],
       datasets: [
         {
-          label: 'Amount ($)',
+          label: "Amount ($)",
           data: [financialData.salary, financialData.feesCollected, financialData.profit],
-          backgroundColor: ['#f87171', '#34d399', '#60a5fa'],
+          backgroundColor: ["#f87171", "#34d399", "#60a5fa"],
         },
       ],
     };
 
     const pieData = {
-      labels: financialData.genderRatio.map(item => item.gender),
+      labels: financialData.genderRatio.map((item) => item.gender),
       datasets: [
         {
-          data: financialData.genderRatio.map(item => item.count),
-          backgroundColor: ['#60a5fa', '#f87171', '#fbbf24'],
+          data: financialData.genderRatio.map((item) => item.count),
+          backgroundColor: ["#60a5fa", "#f87171", "#fbbf24"],
         },
       ],
     };
 
     return { barData, pieData };
+  };
+
+  // Helper function to calculate maximum allowed DOB (for minimum age of 6)
+  const getMaxDOB = () => {
+    const today = new Date();
+    today.setFullYear(today.getFullYear() - 6);
+    return today.toISOString().split("T")[0];
   };
 
   return (
@@ -330,7 +372,13 @@ const AdminDashboard = () => {
           <section>
             <Table
               headers={getTableHeaders()}
-              data={activeTab === "classes" ? getClassesData() : activeTab === "teachers" ? teachers : getStudentsData()}
+              data={
+                activeTab === "classes"
+                  ? getClassesData()
+                  : activeTab === "teachers"
+                  ? teachers
+                  : getStudentsData()
+              }
               onEdit={(item) => openModal("edit", item)}
               onDelete={(id) => handleDelete(id)}
             />
@@ -397,7 +445,7 @@ const AdminDashboard = () => {
                   </div>
                   <div>
                     <label htmlFor="salary" className="block mb-1 text-sm font-medium text-gray-700">
-                      Salary ($)
+                      Salary (₹)
                     </label>
                     <input
                       type="number"
@@ -463,7 +511,7 @@ const AdminDashboard = () => {
                   </div>
                   <div>
                     <label htmlFor="feesPaid" className="block mb-1 text-sm font-medium text-gray-700">
-                      Fees Paid ($)
+                      Fees Paid (₹)
                     </label>
                     <input
                       type="number"
@@ -488,6 +536,7 @@ const AdminDashboard = () => {
                       value={formData.dob || ""}
                       onChange={handleChange}
                       required
+                      max={getMaxDOB()}  // Enforce that the selected date is at most today's date minus 6 years
                     />
                   </div>
                   <div>
@@ -573,7 +622,7 @@ const AdminDashboard = () => {
                   </div>
                   <div>
                     <label htmlFor="fee" className="block mb-1 text-sm font-medium text-gray-700">
-                      Fee ($)
+                      Fee (₹)
                     </label>
                     <input
                       type="number"

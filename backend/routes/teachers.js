@@ -112,13 +112,13 @@ router.put('/:id', protect, authorize('admin'), async (req, res, next) => {
     teacher.email = email || teacher.email;
     teacher.password = password || teacher.password;
     teacher.gender = gender || teacher.gender;
-    teacher.profile.contactNumber = contactNumber || teacher.profile.contactNumber;
-    teacher.profile.profilePicture = profilePicture || teacher.profile.profilePicture;
+    teacher.contactNumber = contactNumber || teacher.contactNumber;
+    teacher.profilePicture = profilePicture || teacher.profilePicture;
     teacher.salary = salary || teacher.salary;
 
     await teacher.save();
 
-    res.json({
+    res.status(202).json({
       _id: teacher._id,
       name: teacher.name,
       email: teacher.email,

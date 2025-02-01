@@ -30,17 +30,21 @@ const StudentSchema = new mongoose.Schema({
     type: Date,
     required: [true, 'Please add Date of Birth'],
   },
-  profile: {
-    contactNumber: {
-      type: String,
-      required: [false, 'Please add a contact number'],
-    },
-    profilePicture: {
-      type: String,
-      default: 'default-profile.png',
-    },
+  contactNumber: {
+        type: String,
+        required: [false, 'Please add a contact number'],
+      },
+  // profile: {
+  //   contactNumber: {
+  //     type: String,
+  //     required: [false, 'Please add a contact number'],
+  //   },
+  //   profilePicture: {
+  //     type: String,
+  //     default: 'default-profile.png',
+  //   },
     // Add more profile fields as necessary
-  },
+  // },
   // Add more fields as necessary
 }, { timestamps: true });
 

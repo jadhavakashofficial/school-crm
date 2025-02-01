@@ -9,7 +9,7 @@ const { protect, authorize } = require('../middleware/auth');
 
 // Create a new Student
 router.post('/', protect, authorize('admin','teacher'), async (req, res, next) => {
-  const { name, email, gender, profilePicture, dob } = req.body;
+  const { name, email, gender, profilePicture, dob, contactNumber,feesPaid } = req.body;
 
   try {
     // Ensure role is 'student'
@@ -26,18 +26,23 @@ router.post('/', protect, authorize('admin','teacher'), async (req, res, next) =
       email,
       gender,
       dob,
+      contactNumber,
+      feesPaid
       // profile: {
       //   contactNumber,
       //   profilePicture,
       // },
     });
 
-    res.status(201).json({
+    res.status(204).json({
       _id: student._id,
       name: student.name,
       email: student.email,
       gender: student.gender,
+      dob: student.dob,
       profile: student.profile,
+      contactNumber:student.contactNumber,
+      feesPaid: student.feesPaid,
     });
   } catch (error) {
     // Handle duplicate email error
@@ -106,24 +111,29 @@ router.put('/:id', protect, authorize('admin','teacher'), async (req, res, next)
     }
 
     // Update fields
-    const { name, email, password, gender, contactNumber, profilePicture } = req.body;
+    const { name, email, password, gender,feesPaid, dob, contactNumber, profilePicture } = req.body;
 
     student.name = name || student.name;
     student.email = email || student.email;
     student.password = password || student.password;
     student.gender = gender || student.gender;
-    student.profile.contactNumber = contactNumber || student.profile.contactNumber;
-    student.profile.profilePicture = profilePicture || student.profile.profilePicture;
+    student.feesPaid = feesPaid || student.feesPaid;
+    student.dob = dob || student.dob;
+    student.contactNumber = contactNumber || student.contactNumber;
+    student.profilePicture = profilePicture || student.profilePicture;
 
     await student.save();
 
-    res.json({
+    res.status(203).json({
       _id: student._id,
       name: student.name,
       email: student.email,
       role: student.role,
       gender: student.gender,
+      feesPaid: student.feesPaid,
+      dob: student.dob,
       profile: student.profile,
+      contactNumber: student.contactNumber,
     });
   } catch (error) {
     next(error);
