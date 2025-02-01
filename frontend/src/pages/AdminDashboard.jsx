@@ -5,43 +5,42 @@ import axiosInstance from "../api/axios";
 import Layout from "../components/Layout";
 import Modal from "../components/Modal";
 import Table from "../components/Table";
-import { Bar, Pie } from "react-chartjs-2";
+import { Bar, Pie, Doughnut } from "react-chartjs-2";
 import "chart.js/auto";
 
 const AdminDashboard = () => {
-  const [activeTab, setActiveTab] = useState("teachers"); // 'teachers', 'students', 'classes', 'financial'
+  // Active tab: "teachers", "students", "classes", "financial", "analysis"
+  const [activeTab, setActiveTab] = useState("teachers");
+  // State for period selection in Financial Analytics ("monthly" or "yearly")
+  const [financialPeriod, setFinancialPeriod] = useState("monthly");
 
   // Data states
   const [teachers, setTeachers] = useState([]);
   const [students, setStudents] = useState([]);
   const [classes, setClasses] = useState([]);
-
-  // Financial Analytics Data
   const [financialData, setFinancialData] = useState(null);
 
-  // Modal states
+  // Modal and Form states
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalTitle, setModalTitle] = useState("");
   const [currentItem, setCurrentItem] = useState(null); // For Edit
-
-  // Form states
   const [formData, setFormData] = useState({});
 
   // Error state
   const [error, setError] = useState("");
 
-  // Fetch data based on activeTab
+  // Fetch data when activeTab or financialPeriod changes
   useEffect(() => {
     if (activeTab === "teachers") {
       fetchTeachers();
-    } else if (activeTab === "students") {
+    } else if (activeTab === "students" || activeTab === "analysis") {
       fetchStudents();
     } else if (activeTab === "classes") {
       fetchClasses();
     } else if (activeTab === "financial") {
       fetchFinancialData();
     }
-  }, [activeTab]);
+  }, [activeTab, financialPeriod]);
 
   // Fetch functions
   const fetchTeachers = async () => {
@@ -56,7 +55,7 @@ const AdminDashboard = () => {
   const fetchStudents = async () => {
     try {
       const response = await axiosInstance.get("/students");
-      // Map contactNumber from profile to top-level for easy access
+      // Map contactNumber (adjust mapping as needed)
       const mappedStudents = response.data.data.map((student) => ({
         ...student,
         contactNumber: student.contactNumber,
@@ -78,7 +77,8 @@ const AdminDashboard = () => {
 
   const fetchFinancialData = async () => {
     try {
-      const response = await axiosInstance.get("/financial/analytics");
+      // Pass the financial period as a query parameter
+      const response = await axiosInstance.get(`/financial/analytics?period=${financialPeriod}`);
       setFinancialData(response.data.data);
     } catch (err) {
       setError("Failed to load financial analytics.");
@@ -111,7 +111,7 @@ const AdminDashboard = () => {
     const { name, value, type, checked } = e.target;
     let val = value;
     if (type === "checkbox") {
-      val = checked ? 1 : 0; // Convert boolean to number for feesPaid
+      val = checked ? 1 : 0;
     }
     setFormData({ ...formData, [name]: val });
   };
@@ -121,27 +121,25 @@ const AdminDashboard = () => {
     e.preventDefault();
     setError("");
     try {
-      if (activeTab === "financial") {
-        // Financial operations can be implemented here if needed
+      if (activeTab === "financial" || activeTab === "analysis") {
+        // Financial/analysis operations handled separately if needed
         return;
       }
-
       if (currentItem) {
         // Edit operation
         await axiosInstance.put(`/${activeTab}/${currentItem._id}`, formData);
-        fetchDataAfterChange();
       } else {
         // Add operation
         await axiosInstance.post(`/${activeTab}`, formData);
-        fetchDataAfterChange();
       }
+      fetchDataAfterChange();
       closeModal();
     } catch (err) {
       setError(err.response?.data?.message || "Operation failed.");
     }
   };
 
-  // Handle Delete
+  // Handle Delete operation
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this item?")) {
       try {
@@ -153,7 +151,7 @@ const AdminDashboard = () => {
     }
   };
 
-  // Fetch data after Add/Edit/Delete
+  // Refresh data after operations
   const fetchDataAfterChange = () => {
     if (activeTab === "teachers") {
       fetchTeachers();
@@ -163,32 +161,33 @@ const AdminDashboard = () => {
       fetchClasses();
     } else if (activeTab === "financial") {
       fetchFinancialData();
+    } else if (activeTab === "analysis") {
+      fetchStudents();
     }
   };
 
-  // Utility functions
+  // Utility: Capitalize first letter
   const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
-// Converts a date string from "dd/mm/yyyy" to "YYYY-MM-DD"
-const formatDOB = (dobString) => {
-  if (!dobString) return "";
-  // Check if the date string contains "/" (dd/mm/yyyy format)
-  if (dobString.includes("/")) {
-    const parts = dobString.split("/");
-    if (parts.length !== 3) return "";
-    const [day, month, year] = parts;
-    // Ensure day and month are two digits
-    const paddedDay = day.padStart(2, "0");
-    const paddedMonth = month.padStart(2, "0");
-    return `${year}-${paddedMonth}-${paddedDay}`;
-  } else {
-    // Otherwise, assume it's in a format that new Date() can parse
-    const dateObj = new Date(dobString);
-    if (isNaN(dateObj.getTime())) return "";
-    return dateObj.toISOString().split("T")[0];
-  }
-};
 
-  // Update getInitialFormData to format dob properly for students
+  // Helper to format DOB for students.
+  // Converts a date string from "dd/mm/yyyy" or ISO format to "YYYY-MM-DD"
+  const formatDOB = (dobString) => {
+    if (!dobString) return "";
+    if (dobString.includes("/")) {
+      const parts = dobString.split("/");
+      if (parts.length !== 3) return "";
+      const [day, month, year] = parts;
+      const paddedDay = day.padStart(2, "0");
+      const paddedMonth = month.padStart(2, "0");
+      return `${year}-${paddedMonth}-${paddedDay}`;
+    } else {
+      const dateObj = new Date(dobString);
+      if (isNaN(dateObj.getTime())) return "";
+      return dateObj.toISOString().split("T")[0];
+    }
+  };
+
+  // getInitialFormData formats initial form values based on tab
   const getInitialFormData = (tab, item) => {
     if (tab === "teachers") {
       return item
@@ -201,24 +200,17 @@ const formatDOB = (dobString) => {
             email: item.email,
             gender: item.gender,
             feesPaid: item.feesPaid,
-            // Use formatDOB to convert the dob string from dd/mm/yyyy to YYYY-MM-DD
+            // Format DOB using formatDOB helper
             dob: item.dob ? formatDOB(item.dob) : "",
             contactNumber: item.contactNumber,
           }
         : { name: "", email: "", gender: "", feesPaid: 0, dob: "", contactNumber: "" };
     } else if (tab === "classes") {
       return item
-        ? {
-            name: item.name,
-            description: item.description,
-            teacherId: item.teacher._id,
-            maxStudents: item.maxStudents,
-            fee: item.fee,
-          }
+        ? { name: item.name, description: item.description, teacherId: item.teacher._id, maxStudents: item.maxStudents, fee: item.fee }
         : { name: "", description: "", teacherId: "", maxStudents: "", fee: "" };
     }
   };
-  
 
   // Define table headers based on activeTab
   const getTableHeaders = () => {
@@ -265,32 +257,18 @@ const formatDOB = (dobString) => {
     }));
   };
 
-  // Prepare data for Financial Analytics
-  const getFinancialChartData = () => {
+  // Prepare data for Financial Analytics using Doughnut chart
+  const getFinancialDoughnutData = () => {
     if (!financialData) return {};
-
-    const barData = {
+    return {
       labels: ["Salary Paid", "Fees Collected", "Profit"],
       datasets: [
         {
-          label: "Amount ($)",
           data: [financialData.salary, financialData.feesCollected, financialData.profit],
           backgroundColor: ["#f87171", "#34d399", "#60a5fa"],
         },
       ],
     };
-
-    const pieData = {
-      labels: financialData.genderRatio.map((item) => item.gender),
-      datasets: [
-        {
-          data: financialData.genderRatio.map((item) => item.count),
-          backgroundColor: ["#60a5fa", "#f87171", "#fbbf24"],
-        },
-      ],
-    };
-
-    return { barData, pieData };
   };
 
   // Helper function to calculate maximum allowed DOB (for minimum age of 6)
@@ -298,6 +276,22 @@ const formatDOB = (dobString) => {
     const today = new Date();
     today.setFullYear(today.getFullYear() - 6);
     return today.toISOString().split("T")[0];
+  };
+
+  // Helper function for Class Analysis (using students data)
+  const getGenderRatioData = () => {
+    const maleCount = students.filter((s) => s.gender === "Male").length;
+    const femaleCount = students.filter((s) => s.gender === "Female").length;
+    return {
+      labels: ["Male", "Female"],
+      datasets: [
+        {
+          label: "Number of Students",
+          data: [maleCount, femaleCount],
+          backgroundColor: ["#3490dc", "#e3342f"],
+        },
+      ],
+    };
   };
 
   return (
@@ -311,7 +305,7 @@ const formatDOB = (dobString) => {
           </div>
         )}
 
-        {/* Tabs for Teachers, Students, Classes, Financial */}
+        {/* Tabs Navigation */}
         <div className="flex space-x-4">
           <button
             className={`px-4 py-2 font-semibold ${
@@ -353,10 +347,20 @@ const formatDOB = (dobString) => {
           >
             Financial Analytics
           </button>
+          <button
+            className={`px-4 py-2 font-semibold ${
+              activeTab === "analysis"
+                ? "text-blue-600 border-b-2 border-blue-600"
+                : "text-gray-600 hover:text-blue-600"
+            }`}
+            onClick={() => setActiveTab("analysis")}
+          >
+            Class Analysis
+          </button>
         </div>
 
-        {/* Add Button */}
-        {activeTab !== "financial" && (
+        {/* Add Button (not shown for Financial or Analysis tabs) */}
+        {activeTab !== "financial" && activeTab !== "analysis" && (
           <div className="flex justify-end">
             <button
               onClick={() => openModal("add")}
@@ -367,50 +371,91 @@ const formatDOB = (dobString) => {
           </div>
         )}
 
-        {/* Table Section */}
-        {activeTab !== "financial" && (
+        {/* Content Section */}
+        {activeTab === "teachers" && (
           <section>
             <Table
               headers={getTableHeaders()}
-              data={
-                activeTab === "classes"
-                  ? getClassesData()
-                  : activeTab === "teachers"
-                  ? teachers
-                  : getStudentsData()
-              }
+              data={teachers}
               onEdit={(item) => openModal("edit", item)}
               onDelete={(id) => handleDelete(id)}
             />
           </section>
         )}
 
-        {/* Financial Analytics Section */}
-        {activeTab === "financial" && (
-          <section className="space-y-6">
-            <h2 className="text-2xl font-semibold text-gray-700">Financial Analytics</h2>
-            {financialData ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Salary Paid vs Fees Collection and Profit Bar Chart */}
-                <div className="bg-white p-4 rounded shadow">
-                  <h3 className="text-xl font-semibold mb-4">Salary Paid vs Fees Collected vs Profit</h3>
-                  <Bar data={getFinancialChartData().barData} />
-                </div>
+        {activeTab === "students" && (
+          <section>
+            <Table
+              headers={getTableHeaders()}
+              data={getStudentsData()}
+              onEdit={(item) => openModal("edit", item)}
+              onDelete={(id) => handleDelete(id)}
+            />
+          </section>
+        )}
 
-                {/* Class Analysis Pie Chart */}
-                <div className="bg-white p-4 rounded shadow">
-                  <h3 className="text-xl font-semibold mb-4">Class Analysis: Gender Ratio</h3>
-                  <Pie data={getFinancialChartData().pieData} />
-                </div>
+        {activeTab === "classes" && (
+          <section>
+            <Table
+              headers={getTableHeaders()}
+              data={getClassesData()}
+              onEdit={(item) => openModal("edit", item)}
+              // Teachers should not see a delete button for classes.
+              onDelete={null}
+            />
+          </section>
+        )}
+
+{activeTab === "financial" && (
+  <section className="space-y-6">
+    <h2 className="text-2xl font-semibold text-gray-700">Financial Analytics</h2>
+    <div className="flex items-center space-x-4">
+      <label className="font-medium text-gray-700">Period:</label>
+      <select
+        value={financialPeriod}
+        onChange={(e) => setFinancialPeriod(e.target.value)}
+        className="px-3 py-2 border rounded"
+      >
+        <option value="monthly">Monthly</option>
+        <option value="yearly">Yearly</option>
+      </select>
+    </div>
+    {financialData ? (
+      <div
+        className="bg-white p-9 rounded shadow flex justify-center items-center mx-auto"
+        style={{ width: "500px", height: "500px" }}
+      >
+        <h3 className="sr-only">Financial Summary</h3>
+        <Doughnut
+          data={getFinancialDoughnutData()}
+          options={{ maintainAspectRatio: false }}
+          height={300}
+          width={300}
+        />
+      </div>
+    ) : (
+      <div>Loading Financial Analytics...</div>
+    )}
+  </section>
+)}
+
+
+
+        {activeTab === "analysis" && (
+          <section className="space-y-6">
+            <h2 className="text-2xl font-semibold text-gray-700">Class Analysis: Gender Ratio</h2>
+            {students.length > 0 ? (
+              <div className="bg-white p-4 rounded shadow">
+                <Bar data={getGenderRatioData()} />
               </div>
             ) : (
-              <div>Loading Financial Analytics...</div>
+              <div>Loading Class Analysis...</div>
             )}
           </section>
         )}
 
-        {/* Modal for Add/Edit */}
-        {activeTab !== "financial" && (
+        {/* Modal for Add/Edit (shown for Teachers, Students, and Classes) */}
+        {(activeTab !== "financial" && activeTab !== "analysis") && (
           <Modal isOpen={isModalOpen} onClose={closeModal} title={modalTitle}>
             <form onSubmit={handleSubmit} className="space-y-4">
               {activeTab === "teachers" && (
@@ -536,7 +581,7 @@ const formatDOB = (dobString) => {
                       value={formData.dob || ""}
                       onChange={handleChange}
                       required
-                      max={getMaxDOB()}  // Enforce that the selected date is at most today's date minus 6 years
+                      max={getMaxDOB()}  // Enforce that the student is at least 6 years old
                     />
                   </div>
                   <div>

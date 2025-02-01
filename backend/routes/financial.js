@@ -1,43 +1,41 @@
-
-
 // backend/routes/financial.js
 
 const express = require('express');
 const router = express.Router();
-const User = require('../models/User');
-const Class = require('../models/Class');
 const { protect, authorize } = require('../middleware/auth');
+const User = require('../models/User');
 
-// Get Total Expenses on Teacher Salaries
-router.get('/expenses/teacher-salaries', protect, authorize('admin'), async (req, res, next) => {
+// GET /api/financial/analytics
+// This endpoint is protected and only accessible by admin users.
+// It calculates total teacher salary, total fees collected from students, and profit.
+router.get('/analytics', protect, authorize('admin'), async (req, res, next) => {
   try {
-    const totalExpenses = await User.aggregate([
-      { $match: { role: 'teacher' } },
-      { $group: { _id: null, totalSalary: { $sum: '$salary' } } },
-    ]);
+    // Fetch all teachers and students from the User collection.
+    // (Assuming teachers have role 'teacher' and students have role 'student')
+    const teachers = await User.find({ role: 'teacher' });
+    const students = await User.find({ role: 'student' });
 
-    res.json({
-      totalExpenses: totalExpenses[0] ? totalExpenses[0].totalSalary : 0,
+    // Calculate the total salary paid to teachers.
+    const totalSalary = teachers.reduce((acc, teacher) => acc + (teacher.salary || 0), 0);
+    
+    // Calculate the total fees collected from students.
+    const totalFeesCollected = students.reduce((acc, student) => acc + (student.feesPaid || 0), 0);
+
+    // Calculate profit as fees collected minus salaries paid.
+    const profit = totalFeesCollected - totalSalary;
+
+    // For period-based analytics, you can extend this by checking a query parameter.
+    // For now, we simply return the aggregate data.
+    return res.status(200).json({
+      data: {
+        salary: totalSalary,
+        feesCollected: totalFeesCollected,
+        profit,
+      },
     });
   } catch (error) {
     next(error);
   }
 });
 
-// Get Total Income from Student Fees
-router.get('/income/student-fees', protect, authorize('admin'), async (req, res, next) => {
-  try {
-    // Sum of all class fees
-    const totalIncome = await Class.aggregate([
-      { $group: { _id: null, totalIncome: { $sum: '$fee' } } },
-    ]);
-
-    res.json({
-      totalIncome: totalIncome[0] ? totalIncome[0].totalIncome : 0,
-    });
-  } catch (error) {
-    next(error);
-  }
-});
-
-module.exports = router; // Correctly export the router
+module.exports = router;
