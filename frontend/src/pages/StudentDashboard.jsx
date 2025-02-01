@@ -8,16 +8,16 @@ const StudentDashboard = () => {
   const [classes, setClasses] = useState([]);
   const [error, setError] = useState("");
 
-  const StudentDashboard = () => {
-    return (
-      <Layout>
-        <div>
-          <h1 className="text-3xl font-bold text-gray-800">Student Dashboard</h1>
-          <p className="mt-4 text-gray-600">Welcome to the Student Dashboard.</p>
-        </div>
-      </Layout>
-    );
-  };
+  // const StudentDashboard = () => {
+  //   return (
+  //     <Layout>
+  //       <div>
+  //         {/* <h1 className="text-3xl font-bold text-gray-800">Student Dashboard</h1> */}
+  //         <p className="mt-4 text-gray-600">Welcome to the Student Dashboard.</p>
+  //       </div>
+  //     </Layout>
+  //   );
+  // };
   useEffect(() => {
     fetchClasses();
   }, []);
@@ -52,7 +52,7 @@ const StudentDashboard = () => {
                   <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm font-semibold text-gray-700">Name</th>
                   <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm font-semibold text-gray-700">Teacher</th>
                   <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm font-semibold text-gray-700">Fee</th>
-                  <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm font-semibold text-gray-700">Actions</th>
+                  {/* <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm font-semibold text-gray-700">Actions</th> */}
                 </tr>
               </thead>
               <tbody>
@@ -61,11 +61,11 @@ const StudentDashboard = () => {
                     <td className="px-6 py-4 border-b border-gray-200">{classItem.name}</td>
                     <td className="px-6 py-4 border-b border-gray-200">{classItem.teacher.name}</td>
                     <td className="px-6 py-4 border-b border-gray-200">${classItem.fee}</td>
-                    <td className="px-6 py-4 border-b border-gray-200">
+                    {/* <td className="px-6 py-4 border-b border-gray-200">
                       <button className="px-3 py-1 text-sm text-white bg-blue-600 rounded hover:bg-blue-700">
                         View Details
                       </button>
-                    </td>
+                    </td> */}
                   </tr>
                 ))}
               </tbody>

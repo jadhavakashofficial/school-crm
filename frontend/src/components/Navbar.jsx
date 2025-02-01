@@ -10,13 +10,15 @@ const Navbar = () => {
 
   const handleLogout = async () => {
     await logout();
+    // user.name=null;
+    // user.role=null;
     navigate("/");
   };
 
   return (
     <nav className="bg-blue-600 p-4 text-white flex justify-between">
       <h1 className="text-xl font-bold">School CRM</h1>
-      <div>
+      {/* <div>
         {user ? (
           <>
             <span className="mr-4">{user.name} ({user.role})</span>
@@ -29,7 +31,16 @@ const Navbar = () => {
             Login
           </Link>
         )}
-      </div>
+      </div> */}
+      {user && (
+  <div>
+    <span className="mr-4">{user.name} ({user.role})</span>
+    <button onClick={handleLogout} className="bg-red-500 px-3 py-1 rounded">
+      Logout
+    </button>
+  </div>
+)}
+
     </nav>
   );
 };

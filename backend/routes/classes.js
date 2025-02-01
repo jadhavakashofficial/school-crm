@@ -40,7 +40,7 @@ router.post('/', protect, authorize('admin'), async (req, res, next) => {
 });
 
 // Get all Classes with Pagination, Filtering, and Sorting
-router.get('/', protect, authorize('admin', 'teacher'), async (req, res, next) => {
+router.get('/', protect, authorize('admin', 'teacher', 'student'), async (req, res, next) => {
   const { page = 1, limit = 10, sortBy = 'name', order = 'asc', search = '' } = req.query;
 
   const sortOrder = order === 'asc' ? 1 : -1;
@@ -51,7 +51,7 @@ router.get('/', protect, authorize('admin', 'teacher'), async (req, res, next) =
   const searchQuery = {
     name: { $regex: search, $options: 'i' }, // Case-insensitive search
   };
-
+ 
   try {
     const classes = await Class.find(searchQuery)
       .populate('teacher', 'name email') // Populate teacher details

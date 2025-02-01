@@ -8,33 +8,34 @@ const User = require('../models/User');
 const { protect, authorize } = require('../middleware/auth');
 
 // Create a new Student
-router.post('/', protect, authorize('admin'), async (req, res, next) => {
-  const { name, email, password, role, gender, contactNumber, profilePicture } = req.body;
+router.post('/', protect, authorize('admin','teacher'), async (req, res, next) => {
+  const { name, email, gender, profilePicture, dob } = req.body;
 
   try {
     // Ensure role is 'student'
-    if (role !== 'student') {
-      return res.status(400).json({ message: 'Role must be student' });
-    }
+    let roles=["admin","teacher"]
+    // console.log(role)
+    // console.log(roles.includes(role))
+    // if (!roles.includes(role)) {
+    //   return res.status(400).json({ message: 'Role must be student' });
+    // }
 
     // Create new student with plain text password
     const student = await User.create({
       name,
       email,
-      password, // Storing plain text password (Not recommended for production)
-      role,
       gender,
-      profile: {
-        contactNumber,
-        profilePicture,
-      },
+      dob,
+      // profile: {
+      //   contactNumber,
+      //   profilePicture,
+      // },
     });
 
     res.status(201).json({
       _id: student._id,
       name: student.name,
       email: student.email,
-      role: student.role,
       gender: student.gender,
       profile: student.profile,
     });
@@ -96,7 +97,7 @@ router.get('/:id', protect, authorize('admin', 'teacher'), async (req, res, next
 });
 
 // Update a Student by ID
-router.put('/:id', protect, authorize('admin'), async (req, res, next) => {
+router.put('/:id', protect, authorize('admin','teacher'), async (req, res, next) => {
   try {
     const student = await User.findById(req.params.id);
 
@@ -130,7 +131,7 @@ router.put('/:id', protect, authorize('admin'), async (req, res, next) => {
 });
 
 // Delete a Student by ID
-router.delete('/:id', protect, authorize('admin'), async (req, res, next) => {
+router.delete('/:id', protect, authorize('admin','teacher'), async (req, res, next) => {
   try {
     const student = await User.findById(req.params.id);
 

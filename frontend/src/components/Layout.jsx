@@ -12,7 +12,7 @@ const Layout = ({ children }) => {
       {/* Navigation Bar */}
       <nav className="bg-white shadow">
         <div className="container mx-auto px-4">
-          <div className="flex justify-between h-16">
+          {/* <div className="flex justify-between h-16">
             <div className="flex">
               <Link to="/" className="flex-shrink-0 flex items-center">
                 <span className="font-bold text-xl text-blue-600">School CRM</span>
@@ -51,7 +51,7 @@ const Layout = ({ children }) => {
                 </button>
               )}
             </div>
-          </div>
+          </div> */}
         </div>
       </nav>
 

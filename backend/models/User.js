@@ -18,7 +18,7 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: [true, 'Please add a password'],
+    required: [false, 'Please add a password'],
     minlength: 6,
   },
   role: {
@@ -29,7 +29,7 @@ const userSchema = new mongoose.Schema({
   gender: {
     type: String,
     enum: ['Male', 'Female', 'Other'],
-    required: true,
+    required: false,
   },
   profile: {
     contactNumber: {
@@ -50,7 +50,8 @@ const userSchema = new mongoose.Schema({
   ],
   salary: {
     type: Number,
-    required: function() { return this.role === 'teacher'; },
+    required: false,
+    // function() { return this.role === 'teacher'; },
   },
 }, {
   timestamps: true,

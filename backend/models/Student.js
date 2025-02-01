@@ -33,7 +33,7 @@ const StudentSchema = new mongoose.Schema({
   profile: {
     contactNumber: {
       type: String,
-      required: [true, 'Please add a contact number'],
+      required: [false, 'Please add a contact number'],
     },
     profilePicture: {
       type: String,
