@@ -5,6 +5,7 @@ const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const session = require('express-session');
+const MongoStore = require('connect-mongo');
 
 // Load environment variables from .env file
 dotenv.config();
@@ -22,47 +23,41 @@ mongoose.connect(process.env.MONGO_URI, {
 .then(() => console.log('Connected to MongoDB'))
 .catch((error) => {
   console.error('MongoDB connection error:', error.message);
-  process.exit(1);
+  process.exit(1); // Exit process with failure
 });
 
 // Middleware to parse JSON
 app.use(express.json());
 
-// Define allowed origins (both production and development)
-const allowedOrigins = [
-  'https://school-crm-cuvette.vercel.app', // Deployed frontend URL
-  'http://localhost:3000'                // Local development URL
-];
-
-// Configure CORS to allow requests from the allowed origins
+// ✅ Fix CORS to Allow Credentials
 app.use(cors({
-  origin: function(origin, callback) {
-    // Allow requests with no origin (like mobile apps, curl)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) === -1) {
-      return callback(new Error("Not allowed by CORS"), false);
-    }
-    return callback(null, true);
-  },
+  origin: ['https://school-crm-cuvette.vercel.app'],
   credentials: true,
 }));
 
-// Configure Session
+// ✅ Configure Secure Session with MongoDB Store
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'default_secret',
+  secret: process.env.SESSION_SECRET || 'supersecretkey',
   resave: false,
   saveUninitialized: false,
+  store: MongoStore.create({
+    mongoUrl: process.env.MONGO_URI, // Store sessions in MongoDB
+    collectionName: 'sessions',
+  }),
   cookie: {
-    secure: process.env.NODE_ENV === 'production', // true in production (HTTPS)
+    secure: true, // ✅ Set to true for HTTPS
     httpOnly: true,
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // 'none' in production to allow cross-site cookies
+    sameSite: "none", // ✅ Required for cross-origin cookies
     maxAge: 1000 * 60 * 60 * 24, // 1 day
   },
 }));
 
-// Placeholder Route
-app.get('/', (req, res) => {
-  res.send('Welcome to the School CRM Backend!');
+// ✅ Debugging Route to Check Session
+app.get('/api/check-session', (req, res) => {
+  if (req.session.user) {
+    return res.json({ session: req.session.user });
+  }
+  return res.status(401).json({ message: "No active session" });
 });
 
 // Import Routes
@@ -85,6 +80,7 @@ app.use(errorHandler);
 
 // Start Server
 const PORT = process.env.PORT || 5001;
+
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
