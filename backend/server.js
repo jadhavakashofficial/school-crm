@@ -31,33 +31,31 @@ app.use(express.json());
 // Define allowed origins (both production and development)
 const allowedOrigins = [
   'https://school-crm-cuvette.vercel.app', // Deployed frontend URL
-  'http://localhost:3000',                // Local development URL
+  'http://localhost:3000'                // Local development URL
 ];
 
 // Configure CORS to allow requests from the allowed origins
 app.use(cors({
   origin: function(origin, callback) {
-    // Allow requests with no origin (like mobile apps, curl requests)
+    // Allow requests with no origin (like mobile apps, curl)
     if (!origin) return callback(null, true);
     if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-      return callback(new Error(msg), false);
+      return callback(new Error("Not allowed by CORS"), false);
     }
     return callback(null, true);
   },
-  credentials: true, // Allow cookies to be sent
+  credentials: true,
 }));
 
 // Configure Session
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'default_secret', // Use a strong secret in production
+  secret: process.env.SESSION_SECRET || 'default_secret',
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: process.env.NODE_ENV === 'production', // Use secure cookies in production (HTTPS)
+    secure: process.env.NODE_ENV === 'production', // true in production (HTTPS)
     httpOnly: true,
-    // For cross-site cookies, if in production, set sameSite to "none"
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // 'none' in production to allow cross-site cookies
     maxAge: 1000 * 60 * 60 * 24, // 1 day
   },
 }));
