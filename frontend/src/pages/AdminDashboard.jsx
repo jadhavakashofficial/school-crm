@@ -603,7 +603,7 @@ const AdminDashboard = () => {
                 teacherName: cls.teacher.name,
               }))}
               onEdit={(item) => openModal("edit", item)}
-              onDelete={null} // No delete for classes
+              onDelete={(id) => handleDelete(id)}// delete for classes
             />
             {sortedClasses.length > classPageSize && (
               <div className="flex justify-center space-x-4 mt-4">
