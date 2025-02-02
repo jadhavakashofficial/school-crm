@@ -51,10 +51,8 @@ Prerequisites
 - Git
 
 Backend Setup
+ Clone the repository:
 
-1. Clone the repository:
-
-   git clone https://github.com/your-username/school-management.git
    cd school-management/backend
 
 
