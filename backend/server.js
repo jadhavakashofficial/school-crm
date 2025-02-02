@@ -1,4 +1,3 @@
-
 // backend/server.js
 
 const express = require('express');
@@ -23,16 +22,29 @@ mongoose.connect(process.env.MONGO_URI, {
 .then(() => console.log('Connected to MongoDB'))
 .catch((error) => {
   console.error('MongoDB connection error:', error.message);
-  process.exit(1); // Exit process with failure
+  process.exit(1);
 });
 
 // Middleware to parse JSON
 app.use(express.json());
 
-// Configure CORS to allow requests from the frontend
+// Define allowed origins (both production and development)
+const allowedOrigins = [
+  'https://school-crm-cuvette.vercel.app', // Deployed frontend URL
+  'http://localhost:3000',                // Local development URL
+];
+
+// Configure CORS to allow requests from the allowed origins
 app.use(cors({
-  origin: 'https://school-crm-cuvette.vercel.app',
-    // 'http://localhost:3000', // Update this if your frontend runs on a different URL
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl requests)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
   credentials: true, // Allow cookies to be sent
 }));
 
@@ -42,8 +54,10 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: false, // Set to true if using HTTPS
+    secure: process.env.NODE_ENV === 'production', // Use secure cookies in production (HTTPS)
     httpOnly: true,
+    // For cross-site cookies, if in production, set sameSite to "none"
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
     maxAge: 1000 * 60 * 60 * 24, // 1 day
   },
 }));
@@ -73,7 +87,6 @@ app.use(errorHandler);
 
 // Start Server
 const PORT = process.env.PORT || 5001;
-
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
