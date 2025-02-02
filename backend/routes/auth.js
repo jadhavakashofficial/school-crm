@@ -1,5 +1,4 @@
 const express = require('express');
-const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const router = express.Router();
 
@@ -14,7 +13,6 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    // Check password (assuming plain text password for now)
     if (password !== user.password) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
@@ -26,11 +24,11 @@ router.post('/login', async (req, res) => {
       role: user.role
     };
 
-    console.log("Session After Login:", req.session); // Debugging
+    console.log("✅ Session After Login:", req.session); // Debugging
 
     res.json({ message: "Login successful", user: req.session.user });
   } catch (error) {
-    console.error("Login Error:", error);
+    console.error("❌ Login Error:", error);
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -39,7 +37,7 @@ router.post('/login', async (req, res) => {
 router.post('/logout', (req, res) => {
   req.session.destroy((err) => {
     if (err) {
-      console.error("Logout Error:", err);
+      console.error("❌ Logout Error:", err);
       return res.status(500).json({ message: "Logout failed" });
     }
     res.clearCookie('connect.sid', { path: '/', secure: true, sameSite: "none" });
