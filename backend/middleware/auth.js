@@ -1,33 +1,29 @@
-// backend/middleware/auth.js
-
 const User = require('../models/User');
 
-// Protect routes - Ensure session persistence
+// ✅ Protect Middleware - Ensures User is Authenticated
 const protect = async (req, res, next) => {
+  console.log("Checking Session:", req.session); // Debugging session data
+
+  if (!req.session.user) {
+    return res.status(401).json({ message: "Not authorized, no active session" });
+  }
+
   try {
-    console.log("Session Data:", req.session); // Debugging session data
-
-    // Check if user session exists
-    if (!req.session.user) {
-      return res.status(401).json({ message: 'Not authorized, no active session' });
-    }
-
-    // Fetch user data from session
     const user = await User.findById(req.session.user._id).select('-password');
 
     if (!user) {
-      return res.status(401).json({ message: 'Not authorized, user not found' });
+      return res.status(401).json({ message: "Not authorized, user not found" });
     }
 
     req.user = user;
     next();
-  } catch (err) {
-    console.error("Auth Middleware Error:", err);
-    res.status(401).json({ message: 'Not authorized' });
+  } catch (error) {
+    console.error("Auth Middleware Error:", error);
+    res.status(401).json({ message: "Not authorized" });
   }
 };
 
-// Authorize user roles
+// ✅ Authorize Middleware - Restricts Access Based on Role
 const authorize = (...roles) => {
   return (req, res, next) => {
     if (!req.user || !roles.includes(req.user.role)) {
