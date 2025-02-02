@@ -2,17 +2,6 @@ School Management System
 
 A full-featured School Management System built using the MERN stack. This project includes separate dashboards for administrators and teachers, with functionality to manage teachers, students, and classes. It also provides financial analytics and class analysis features, including filtering, sorting, and pagination.
 
-## Table of Contents
-
-- [Features](#features)
-- [Technologies Used](#technologies-used)
-- [Project Structure](#project-structure)
-- [Installation](#installation)
-- [Usage](#usage)
-- [API Endpoints](#api-endpoints)
-- [Deployment](#deployment)
-- [Contributing](#contributing)
-- [License](#license)
 
 Features
 
