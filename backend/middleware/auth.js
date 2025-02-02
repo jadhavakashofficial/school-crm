@@ -2,7 +2,7 @@ const User = require('../models/User');
 
 // ✅ Protect Middleware - Ensures User is Authenticated
 const protect = async (req, res, next) => {
-  console.log("Checking Session:", req.session); // Debugging session data
+  console.log("🔍 Checking Session Data:", req.session); // Debugging session data
 
   if (!req.session.user) {
     return res.status(401).json({ message: "Not authorized, no active session" });
@@ -18,7 +18,7 @@ const protect = async (req, res, next) => {
     req.user = user;
     next();
   } catch (error) {
-    console.error("Auth Middleware Error:", error);
+    console.error("❌ Auth Middleware Error:", error);
     res.status(401).json({ message: "Not authorized" });
   }
 };
