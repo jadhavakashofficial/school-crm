@@ -1,4 +1,3 @@
-
 // backend/server.js
 
 const express = require('express');
@@ -7,7 +6,6 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const session = require('express-session');
 
-// Load environment variables from .env file
 dotenv.config();
 
 const app = express();
@@ -29,21 +27,34 @@ mongoose.connect(process.env.MONGO_URI, {
 // Middleware to parse JSON
 app.use(express.json());
 
-// Configure CORS to allow requests from the frontend
+// CORS config: allow your vercel URL + local dev
+const allowedOrigins = [
+  'https://school-crm-cuvette-hq5gapiwx-jadhavakashofficials-projects.vercel.app',
+  'http://localhost:3000'
+];
+
 app.use(cors({
-  origin: 'https://school-crm-cuvette-hq5gapiwx-jadhavakashofficials-projects.vercel.app', // Update this if your frontend runs on a different URL
-  credentials: true, // Allow cookies to be sent
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like Postman)
+    if (!origin) return callback(null, true);
+    if (!allowedOrigins.includes(origin)) {
+      return callback(new Error(`Origin ${origin} not allowed by CORS`), false);
+    }
+    return callback(null, true);
+  },
+  credentials: true,
 }));
 
-// Configure Session
+// Session config
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'default_secret', // Use a strong secret in production
+  secret: process.env.SESSION_SECRET || 'default_secret',
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: false, // Set to true if using HTTPS
+    secure: process.env.NODE_ENV === 'production', 
     httpOnly: true,
-    maxAge: 1000 * 60 * 60 * 24, // 1 day
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    maxAge: 1000 * 60 * 60 * 24,
   },
 }));
 
@@ -72,7 +83,6 @@ app.use(errorHandler);
 
 // Start Server
 const PORT = process.env.PORT || 5001;
-
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
