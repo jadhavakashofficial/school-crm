@@ -212,7 +212,7 @@ const AdminDashboard = () => {
         : { name: "", email: "", gender: "", feesPaid: 0, dob: "No", contactNumber: "No" };
     } else if (tab === "classes") {
       return item
-        ? { name: item.name, description: item.description, teacherId: item.teacher._id, maxStudents: item.maxStudents, fee: item.fee }
+        ? { name: item.name, description: item.description,  maxStudents: item.maxStudents, fee: item.fee }
         : { name: "", description: "", teacherId: "", maxStudents: "", fee: "" };
     }
   };
@@ -236,8 +236,8 @@ const AdminDashboard = () => {
       ];
     } else if (activeTab === "classes") {
       return [
-        { key: "name", label: "Name" },
-        { key: "teacherName", label: "Teacher" },
+        { key: "name", label: "Class Name" },
+        // { key: "teacherName", label: "Teacher" },
         { key: "maxStudents", label: "Max Students" },
         { key: "fee", label: "Fee (₹)" },
       ];
@@ -598,10 +598,7 @@ const AdminDashboard = () => {
             </div>
             <Table
               headers={getTableHeaders()}
-              data={paginatedClasses.map((cls) => ({
-                ...cls,
-                teacherName: cls.teacher.name,
-              }))}
+              data={paginatedClasses}
               onEdit={(item) => openModal("edit", item)}
               onDelete={(id) => handleDelete(id)}// delete for classes
             />
