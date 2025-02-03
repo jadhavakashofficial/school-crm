@@ -31,7 +31,7 @@ app.use(express.json());
 
 // Configure CORS to allow requests from the frontend
 app.use(cors({
-  origin: 'http://localhost:3000', // Update this if your frontend runs on a different URL
+  origin: 'https://school-crm-cuvette-hq5gapiwx-jadhavakashofficials-projects.vercel.app', // Update this if your frontend runs on a different URL
   credentials: true, // Allow cookies to be sent
 }));
 
