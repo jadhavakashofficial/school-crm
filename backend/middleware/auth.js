@@ -5,12 +5,13 @@ const User = require('../models/User');
 // Protect routes
 const protect = async (req, res, next) => {
   try {
+    console.log("Session data in protect:", req.session); // Debugging
+
     if (!req.session.userId) {
       return res.status(401).json({ message: 'Not authorized, no session' });
     }
 
     const user = await User.findById(req.session.userId).select('-password');
-
     if (!user) {
       return res.status(401).json({ message: 'Not authorized' });
     }
@@ -19,15 +20,15 @@ const protect = async (req, res, next) => {
     next();
   } catch (err) {
     console.error(err);
-    res.status(401).json({ message: 'Not authorized' });
+    return res.status(401).json({ message: 'Not authorized' });
   }
 };
 
 // Authorize user roles
 const authorize = (...roles) => {
   return (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
-      return res.status(403).json({ message: `User role '${req.user.role}' is not authorized to access this route` });
+    if (!req.user || !roles.includes(req.user.role)) {
+      return res.status(403).json({ message: `User role '${req.user.role}' is not authorized` });
     }
     next();
   };
