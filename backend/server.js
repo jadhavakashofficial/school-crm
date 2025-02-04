@@ -30,6 +30,7 @@ app.use(express.json());
 // CORS config: allow your vercel URL + local dev
 const allowedOrigins = [
   'https://school-crm-cuvette-hq5gapiwx-jadhavakashofficials-projects.vercel.app',
+  'https://school-crm-cuvette.vercel.app/',
   'http://localhost:3000'
 ];
 
